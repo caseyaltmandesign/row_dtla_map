@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <style type="text/css">        
+      row-dtla-map {
+        position:absolute;
+        top:0px;
+        left:0px;
+        right:0px;
+        bottom:0px;
+      }
+    </style>
+  </head>
+  <body>
+    <row-dtla-map
+      token="pk.eyJ1IjoiY2FzZXlhbHRtYW4iLCJhIjoiMjZUaXZuRSJ9.gCE5rn39dqh8qme6xNPNCw"
+      center="-118.2458813250148,34.03530262727543"
+      zoom="18"
+      id="map"
+      mapstyle="clyesrh8s00qo01qp81ql7h4t"
+      mapuser="caseyaltman"
+      sheetid="1H4oXpp30pJ956yo4W9cAX5-2DhC4RFdRos5TWcQj7Ys"
+      sheetapikey="AIzaSyDuUC-bPV_VLZHG5GHSM-r46I_isxoMdS0"
+      >
+    </row-dtla-map>
+      
+    <script>
+      class RowDtlaMap extends HTMLElement {
+        
+        #props = {}
+        #assets = {}
+
+        #config = {
+          'script-src': 'https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js',
+          'css-src': 'https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css'
+        }
+
+        static get observedAttributes() {
+          return ['token','center','zoom', 'userlocation', 'mapstyle', 'mapuser', 'sheetid', 'sheetapikey'];
+        }
+
+        // Getters and setters
+        get token() {
+          return this.#props.token
+        }
+        set token(token) {
+          this.#props.token = token
+        }
+
+        get center() {
+          return this.#props.center
+        }
+        set center(coordinate) {
+          const coordString = coordinate.replace(" ", "").split(",")
+          const lngLat = coordString.map((coordVal) => parseFloat(coordVal))
+          this.#props.center = lngLat.slice(0)
+        }
+
+        get sheetid() {
+          return this.#props.sheetid
+        }
+        set sheetid(sheetid) {
+          this.#props.sheetid = sheetid
+        }
+
+        get sheetapikey() {
+          return this.#props.sheetapikey
+        }
+        set sheetapikey(sheetapikey) {
+          this.#props.sheetapikey = sheetapikey
+        }        
+
+        get zoom() {
+          return this.#props.zoom
+        }
+        set zoom(zoom) {
+          this.#props.zoom = parseFloat(zoom)
+        }
+        
+        get storesConfig() {
+          return this.#props.storesConfig;
+        }
+        set storesConfig(config) {
+          return this.#props.storesConfig = JSON.parse(JSON.stringify(config))
+        }
+
+        get selectedID() {
+          return this.#props.selectedID
+        }
+        set selectedID(id) {
+          if(id === null) {
+            return
+          }
+          this.#props.selectedID = id
+        }
+
+        get mapstyle() {
+          return this.#props.mapstyle
+        }
+        set mapstyle(mapstyle) {
+          if(mapstyle === '') { return }
+          this.#props.mapstyle = mapstyle
+        }
+
+        get mapuser() {
+          return this.#props.mapuser
+        }
+        set mapuser(mapuser) {
+          if(mapuser === '') { return }
+          this.#props.mapuser = mapuser
+        }        
+
+        get selectedSlug() {
+          return this.#props.selectedSlug
+        }
+        set selectedSlug(slug) {
+          if(slug === null) {
+            return
+          }            
+          this.#props.selectedSlug = slug
+        }
+
+        get streetSlug() {
+          return this.#props.streetSlug 
+        }
+        set streetSlug(slug) {
+          if(slug === null) {
+            return
+          }            
+          this.#props.streetSlug = slug            
+        }
+        
+        constructor() {
+          super()
+          this.template = document.createElement("template")
+          this.template.innerHTML = `
+            <link href="${this.#config["css-src"]}" rel="stylesheet" />
+            <style type="text/css">
+               @font-face {
+                  font-family: SangBleuKingdom;
+                  src: url('https://ezmapdesign.com/demos/fonts/SangBleuKingdom-Medium.otf');
+               }                
+              :host{
+                display: block;
+                position:absolute;
+                top:0px;
+                left: 0px;
+                right:0px;
+                bottom:0px;
+              }
+              :host .map-container{
+                position: relative;
+                width: 100%;
+                height: 100%;
+              }
+              :host .map {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+              }
+              .dtla_popup .mapboxgl-popup-content {
+                background:#000;
+                padding:25px;                
+              }
+              .dtla_popup .mapboxgl-popup-content h2 {
+                font-family: SangBleuKingdom;
+              }
+              .dtla_popup .mapboxgl-popup-close-button {
+                color:#fff;
+              }
+              .dtla_popup.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+                border-top-color: #000 !important;
+              }
+              .dtla_popup.mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+                border-bottom-color: #000 !important;
+              }
+              .dtla_popup.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+                border-right-color: #000 !important;
+              }
+              .dtla_popup.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+                border-left-color: #000 !important;
+              }
+
+              .dtla_popup h2 {
+                margin: 0px 0px 10px 0px;
+                font-size:22px;
+              }
+              .dtla_popup .address {
+                margin: 20px 0px 0px 0px;
+              }
+              .dtla_popup .popup-content {
+                background:#000;color:#FFF;
+              }
+              .dtla_popup .btn_moreinfo {
+                padding: 5px;
+                background: #fff;
+                border-radius: 2px;
+                text-decoration: none;
+                color: #58595B;
+                margin-top: 10px;
+                display: inline-block;                
+              }
+              .mapboxgl-ctrl-logo {
+                display:none !important;
+              }
+            </style>
+            <div class="map-container">
+              <div class="map"></div>
+            </div>
+          `
+          this.attachShadow({mode: 'open'})
+        }
+
+        // Lifecycle methods
+        attributeChangedCallback(attrName, oldVal, newVal) {
+          this[attrName] = newVal
+        }
+
+        connectedCallback() {
+          this.shadowRoot.appendChild(this.template.content.cloneNode(true))
+          const mapboxScript = document.createElement("script")
+          mapboxScript.src = this.#config["script-src"]
+          mapboxScript.onload = this.initialize.bind(this)          
+          this.shadowRoot.appendChild(mapboxScript) 
+        }
+
+        initialize() {          
+          try {
+            mapboxgl.accessToken = this.token
+            this.#assets.map = new mapboxgl.Map({
+              container: this.shadowRoot.querySelector('.map'),
+              center: this.center,
+              zoom: this.zoom,
+              minZoom: this.zoom,
+              maxZoom: 20,
+              projection: 'mercator',
+              style: `mapbox://styles/${this.mapuser}/${this.mapstyle}`
+            })
+            this.#assets.dtlaPopup = new mapboxgl.Popup({className: 'dtla_popup'}).addTo(this.#assets.map)
+            this.#assets.map.on('style.load', this.#onMapStyleLoadedHandler.bind(this))
+            
+            this.#assets.map.addControl(new mapboxgl.NavigationControl({showCompass: false}))
+          }
+          catch(error) {
+            console.log(error)
+          }
+        }
+
+        // Event emittor method
+        emit(type, detail) {
+          let event = new CustomEvent(`map:${type}`, {
+            bubbles: true,
+            cancelable: true,
+            detail: detail
+          })
+          this.dispatchEvent(event)
+        }        
+
+        // Private methods
+
+        async #onMapStyleLoadedHandler() {
+          this.#assets.map.on('idle', (e) => {
+            const {lng, lat} = this.#assets.map.getCenter()
+            this.center = [lng, lat].join(",")
+          })
+
+          await this.#loadConfig()
+
+          this.#addEvents()
+
+          const urlParams = new URL(window.location.toLocaleString()).searchParams
+
+          this.selectedID = typeof urlParams.get('id') !== 'undefined' ? urlParams.get('id') : null
+          
+          const selectedSlug = typeof urlParams.get('name') !== 'undefined' ? urlParams.get('name') : null
+          
+          this.streetSlug = selectedSlug
+
+
+          let matchingID = this.storesConfig.filter((store, idx) => {
+            if(store.slug === selectedSlug) {
+              return true
+            }
+          })
+
+          if(matchingID.length > 0) {
+            this.selectedID = matchingID[0].id
+          }
+          
+          try {
+            if(typeof this.selectedID !== 'undefined') {
+              this.#assets.map.setPaintProperty(
+                'STORE POLYGONS - POLYGON',
+                'fill-color',
+                [
+                  'case',
+                  ['==', ['get', 'ID'], this.selectedID],
+                  '#1A88FF',
+                  '#BFBFBF'
+                ]
+              )              
+              
+              if(urlParams.get('name') === null) {
+                this.#assets.map.setPaintProperty(
+                  'VACANT LOTS - POLYGON',
+                  'fill-color',
+                  [
+                    'case',
+                    ['==', ['get', 'ID'], this.selectedID],
+                    '#1A88FF',
+                    '#bfbfbf'
+                  ]
+                )
+                this.#assets.map.setPaintProperty(
+                  'SUITE_NUMBERS',
+                  'text-color',
+                  [
+                    'case',
+                    ['==', ['get', 'ID'], this.selectedID],
+                    '#FFF',
+                    '#000'
+                  ]
+                )
+              }
+              console.log(typeof urlParams.get('name'), urlParams.get('name'), this.selectedID)              
+            }
+          }
+          catch(error) {
+            console.log(error)
+          }
+
+          try {
+            if(typeof this.selectedID !== 'undefined') {
+              this.#assets.map.setPaintProperty('LIVE POLYGONS - POLYGON', 'fill-color', ['case', ['==', ['get', 'ID'], this.selectedID], '#1A88FF', '#bfbfbf'])         
+            }
+          }
+          catch(error) {
+            console.log(error)
+          }
+
+          try {         
+            if(typeof this.selectedID !== 'undefined') {
+              this.#assets.map.setPaintProperty('DINE POLYGONS - POLYGON', 'fill-color', ['case', ['==', ['get', 'ID'], this.selectedID], '#1A88FF', '#bfbfbf'])         
+            }
+          }
+          catch(error) {
+            console.log(error)
+          } 
+          
+          try {         
+            if(typeof this.streetSlug !== 'undefined') {
+              this.#assets.map.setPaintProperty('ROW_DTLA_STREETS_MISC', 'fill-color', ['case', ['==', ['get', 'SLUG'], this.streetSlug], '#1A88FF', '#bfbfbf'])
+              this.#assets.map.setPaintProperty('ROW_DTLA_STREETS_MISC', 'fill-opacity', ['case', ['==', ['get', 'SLUG'], this.streetSlug], 1, 0])
+            }
+          }
+          catch(error) {
+            console.log(error)
+          }         
+
+          const layerList = this.#assets.map.getStyle().layers
+          
+          console.log(layerList)
+
+          for(let i = 0;i < layerList.length; i++) {
+            if(layerList[i].id.indexOf(this.selectedID) > -1) {
+              this.#assets.map.setPaintProperty(layerList[i].id, 'text-color', '#FFF')
+            }
+          }
+        }
+
+        #addEvents() {
+          
+          // STORE POLYGON handlers
+          this.#assets.map.on('mouseover', 'STORE POLYGONS - POLYGON', (e) => {
+            this.#assets.map.getCanvas().style.cursor = 'pointer'
+          })
+          this.#assets.map.on('mouseout', 'STORE POLYGONS - POLYGON', (e) => {
+            this.#assets.map.getCanvas().style.cursor = ''
+          })
+          this.#assets.map.on('click', 'STORE POLYGONS - POLYGON', (e) => {        
+            this.#startPopup(e, this.#buildPopupLayout(this.#retrieveFromConfig(e.features[0].properties.ID)))            
+          })          
+
+          // LIVE POLYGON handlers
+          this.#assets.map.on('click', 'LIVE POLYGONS - POLYGON', (e) => {
+            this.#startPopup(e, this.#buildPopupLayout(this.#retrieveFromConfig(e.features[0].properties.ID)))
+          })
+          this.#assets.map.on('mouseover', 'LIVE POLYGONS - POLYGON', (e) => {
+            this.#assets.map.getCanvas().style.cursor = 'pointer'
+          })
+          this.#assets.map.on('mouseout', 'LIVE POLYGONS - POLYGON', (e) => {
+            this.#assets.map.getCanvas().style.cursor = ''
+          })          
+          
+          // DINE POLYGON handlers
+          this.#assets.map.on('click', 'DINE POLYGONS - POLYGON', (e) => {
+            this.#startPopup(e, this.#buildPopupLayout(this.#retrieveFromConfig(e.features[0].properties.ID)))
+          })
+          this.#assets.map.on('mouseover', 'DINE POLYGONS - POLYGON', (e) => {
+            this.#assets.map.getCanvas().style.cursor = 'pointer'
+          })
+          this.#assets.map.on('mouseout', 'DINE POLYGONS - POLYGON', (e) => {
+            this.#assets.map.getCanvas().style.cursor = ''
+          })          
+          
+          // RESTROOM POLYGON handlers
+          this.#assets.map.on('click', 'RESTROOMS POLYGONS - POLYGON', (e) => {
+            this.#startPopup(e, this.#buildPopupLayout(this.#retrieveFromConfig(e.features[0].properties.ID)))
+          })
+          
+          // CUSTOM SHAPE handlers I
+          this.#assets.map.on('click', 'POI - SMORGASBURG', (e) => {
+            this.#startPopup(e, this.#buildPopupLayout(this.#retrieveFromConfig(e.features[0].properties.ID)))
+          })
+
+          this.#assets.map.on('mouseover', 'POI - SMORGASBURG', (e) => {
+            this.#assets.map.getCanvas().style.cursor = 'pointer'
+          })
+          this.#assets.map.on('mouseout', 'POI - SMORGASBURG', (e) => {
+            this.#assets.map.getCanvas().style.cursor = ''
+          }) 
+          
+          // CUSTOM SHAPE handlers II
+          this.#assets.map.on('click', 'POI - PRODUCE MARKET', (e) => {
+            this.#startPopup(e, this.#buildPopupLayout(this.#retrieveFromConfig(e.features[0].properties.ID)))
+          })           
+          this.#assets.map.on('mouseover', 'POI - PRODUCE MARKET', (e) => {
+            this.#assets.map.getCanvas().style.cursor = 'pointer'
+          })
+          this.#assets.map.on('mouseout', 'POI - PRODUCE MARKET', (e) => {
+            this.#assets.map.getCanvas().style.cursor = ''
+          })  
+
+          // STREET SHAPE handlers
+          this.#assets.map.on('click', 'ROW_DTLA_STREETS_MISC', (e) => {
+            this.#startPopup(e, this.#buildPopupLayout(this.#retrieveFromConfig(e.features[0].properties.ID), false ))
+          })          
+          this.#assets.map.on('mouseover', 'ROW_DTLA_STREETS_MISC', (e) => {
+            this.#assets.map.getCanvas().style.cursor = 'pointer'
+          })
+          this.#assets.map.on('mouseout', 'ROW_DTLA_STREETS_MISC', (e) => {
+            this.#assets.map.getCanvas().style.cursor = ''
+          })          
+
+        }
+      
+        async #loadConfig() {
+          let dtlaConfigRaw = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${this.sheetid}/values/modal_box_info?alt=json&key=${this.sheetapikey}`)
+          let dtlaConfig = await dtlaConfigRaw.json()
+          if(dtlaConfig.values.length > 0) {
+            let fieldNames = dtlaConfig.values.shift()
+            let formattedFieldNames = fieldNames.map((field) => {
+              return field.replaceAll(' ', '_').toLowerCase()
+            })
+            this.storesConfig = dtlaConfig.values.map((row) => {
+              let newItem = {}
+              row.forEach((field, index) => {
+                if(formattedFieldNames[index] === 'address') {
+                  field = field.replace(/\n/g,'<br/>')
+                }
+                if(formattedFieldNames[index] === 'link_to_page' && field !== '') {
+                  let parts = field.split('/')
+                  newItem.slug = parts[parts.length - 1]
+                }
+                newItem[formattedFieldNames[index]] = field
+              })
+              return newItem
+            })
+          }
+          else
+          {
+            alert('There was no response from the config storage.')
+          }            
+        }
+      
+        #retrieveFromConfig(id) {
+          let matchingRecords = this.#props.storesConfig.filter((item, index) => {
+            return item.id.toLowerCase() === id.toLowerCase()
+          })
+
+          return matchingRecords[0]
+        }
+      
+        #buildPopupLayout(infoObj, needsMoreInfoBtn = true) {
+          if(typeof infoObj === 'undefined') { return null }
+          return `<div class="popup-content">
+            <h2>${typeof infoObj.name !== 'undefined' ? infoObj.name : ''}</h2>
+            <p class="address">${infoObj.address}</p>
+            <p>${infoObj.website_string}</p>
+            ${ needsMoreInfoBtn === true ? `<a href="${infoObj.link_to_page}" target="_blank" class="btn_moreinfo">More Information</a>` : ''}            
+          </div>` 
+        }
+
+        #startPopup(evt, html) {
+          if(html === null) { return }
+
+          this.#assets.dtlaPopup
+            .setLngLat(evt.lngLat)
+            .setHTML(html)
+            .setMaxWidth("400px")
+            .addTo(this.#assets.map)
+        }
+      }
+      window.customElements.define('row-dtla-map', RowDtlaMap)
+    </script>
+  </body>
+</html>      
