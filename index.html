@@ -19,7 +19,7 @@
       center="-118.2458813250148,34.03530262727543"
       zoom="18"
       id="map"
-      mapstyle="clyesrh8s00qo01qp81ql7h4t"
+      mapstyle="clx95xzi900ku01qs62l12lb8"
       mapuser="caseyaltman"
       sheetid="1H4oXpp30pJ956yo4W9cAX5-2DhC4RFdRos5TWcQj7Ys"
       sheetapikey="AIzaSyDuUC-bPV_VLZHG5GHSM-r46I_isxoMdS0"
@@ -288,43 +288,17 @@
           if(matchingID.length > 0) {
             this.selectedID = matchingID[0].id
           }
+
+          console.log(this.selectedID)
           
           try {
             if(typeof this.selectedID !== 'undefined') {
-              this.#assets.map.setPaintProperty(
-                'STORE POLYGONS - POLYGON',
-                'fill-color',
-                [
-                  'case',
-                  ['==', ['get', 'ID'], this.selectedID],
-                  '#1A88FF',
-                  '#BFBFBF'
-                ]
-              )              
+              this.#assets.map.setPaintProperty('STORE POLYGONS - POLYGON', 'fill-color', ['case', ['==', ['get', 'ID'], this.selectedID], '#1A88FF', '#bfbfbf'])         
               
-              if(urlParams.get('name') === null) {
-                this.#assets.map.setPaintProperty(
-                  'VACANT LOTS - POLYGON',
-                  'fill-color',
-                  [
-                    'case',
-                    ['==', ['get', 'ID'], this.selectedID],
-                    '#1A88FF',
-                    '#bfbfbf'
-                  ]
-                )
-                this.#assets.map.setPaintProperty(
-                  'SUITE_NUMBERS',
-                  'text-color',
-                  [
-                    'case',
-                    ['==', ['get', 'ID'], this.selectedID],
-                    '#FFF',
-                    '#000'
-                  ]
-                )
+              if(typeof urlParams.get('name') === 'undefined') {
+                this.#assets.map.setPaintProperty('VACANT LOTS - POLYGON', 'fill-color', ['case', ['==', ['get', 'ID'], this.selectedID], '#1A88FF', '#bfbfbf'])
+                this.#assets.map.setPaintProperty('SUITE_NUMBERS', 'text-color', ['case', ['==', ['get', 'ID'], this.selectedID], '#FFF', '#000'])
               }
-              console.log(typeof urlParams.get('name'), urlParams.get('name'), this.selectedID)              
             }
           }
           catch(error) {
