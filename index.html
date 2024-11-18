@@ -321,7 +321,21 @@
           }
           catch(error) {
             console.log(error)
-          } 
+          }
+
+          try {         
+            if(typeof this.selectedID !== 'undefined') {
+              this.#assets.map.setPaintProperty('VACANT LOTS - POLYGON', 'fill-color', 
+              ['case', 
+                ['==', ['get', 'ID'], this.selectedID], '#1A88FF', 
+                '#ededed'
+              ])         
+              this.#assets.map.setPaintProperty('SUITE_NUMBERS', 'text-color', ['case', ['==', ['get', 'ID'], this.selectedID], '#FFF', '#000'])
+            }
+          }
+          catch(error) {
+            console.log(error)
+          }           
           
           try {         
             if(typeof this.streetSlug !== 'undefined') {
