@@ -289,7 +289,14 @@
             this.selectedID = matchingID[0].id
           }
 
-          console.log(this.selectedID)
+          try {
+            if(typeof this.selectedID !== 'undefined') {
+              this.#assets.map.setPaintProperty('LOBBIES - POLYGON', 'fill-color', ['case', ['==', ['get', 'ID'], this.selectedID], '#1A88FF', '#ededed'])
+            }
+          }
+          catch(error) {
+            console.log(error)
+          } 
           
           try {
             if(typeof this.selectedID !== 'undefined') {
@@ -359,6 +366,17 @@
         }
 
         #addEvents() {
+
+          // LOBBY POLYGON handlers
+          this.#assets.map.on('mouseover', 'LOBBIES - POLYGON', (e) => {
+            this.#assets.map.getCanvas().style.cursor = 'pointer'
+          })
+          this.#assets.map.on('mouseout', 'LOBBIES - POLYGON', (e) => {
+            this.#assets.map.getCanvas().style.cursor = ''
+          })
+          this.#assets.map.on('click', 'LOBBIES - POLYGON', (e) => {        
+            this.#startPopup(e, this.#buildPopupLayout(this.#retrieveFromConfig(e.features[0].properties.ID)))            
+          }) 
           
           // STORE POLYGON handlers
           this.#assets.map.on('mouseover', 'STORE POLYGONS - POLYGON', (e) => {
